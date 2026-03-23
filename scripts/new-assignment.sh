@@ -6,30 +6,19 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 usage() {
-  cat <<'EOF'
-Usage:
-  ./scripts/new-assignment.sh "Assignment Title"
-  ./scripts/new-assignment.sh --date YYYY-MM-DD "Assignment Title"
+  cat <<'EOU'
+사용법:
+  ./scripts/new-assignment.sh "과제 제목"
 
-Description:
-  - Creates a new assignment folder under assignments/YYYY-MM-DD-slug
-  - Generates README.md, ASSIGNMENT.md, RETRO.md
-EOF
+설명:
+  - assignments/<번호>-<제목-슬러그> 폴더를 생성합니다. (예: 03-form-builder)
+  - README.md, ASSIGNMENT.md, RETRO.md 템플릿을 생성합니다.
+EOU
 }
 
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
   usage
   exit 0
-fi
-
-DATE_OVERRIDE=""
-if [[ "${1:-}" == "--date" ]]; then
-  if [[ $# -lt 3 ]]; then
-    usage
-    exit 1
-  fi
-  DATE_OVERRIDE="$2"
-  shift 2
 fi
 
 if [[ $# -lt 1 ]]; then
@@ -38,96 +27,111 @@ if [[ $# -lt 1 ]]; then
 fi
 
 if [[ ! -f "README.md" ]]; then
-  echo "Error: run this script at repository root." >&2
+  echo "Error: 저장소 루트에서 실행해주세요." >&2
   exit 1
 fi
 
 TITLE="$*"
-DATE_STR="${DATE_OVERRIDE:-$(date +%F)}"
-
-if [[ ! "$DATE_STR" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
-  echo "Error: date must be YYYY-MM-DD." >&2
-  exit 1
-fi
-
-SLUG="$(printf '%s' "$TITLE" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//')"
+SLUG="$(printf '%s' "$TITLE" | tr '[:upper:]' '[:lower:]' | sed -E 's/[[:space:]]+/-/g; s|/|-|g; s|^-+||; s|-+$||')"
 
 if [[ -z "$SLUG" ]]; then
-  echo "Error: title produced an empty slug. Use letters/numbers in title." >&2
+  echo "Error: 유효한 제목을 입력해주세요." >&2
   exit 1
 fi
 
-ASSIGNMENT_DIR="assignments/${DATE_STR}-${SLUG}"
+mkdir -p assignments
+
+MAX_NUM=0
+DIR_COUNT=0
+while IFS= read -r dir; do
+  DIR_COUNT=$((DIR_COUNT + 1))
+  base="$(basename "$dir")"
+  if [[ "$base" =~ ^([0-9]{2})- ]]; then
+    num=$((10#${BASH_REMATCH[1]}))
+    if (( num > MAX_NUM )); then
+      MAX_NUM=$num
+    fi
+  fi
+done < <(find assignments -mindepth 1 -maxdepth 1 -type d | sort)
+
+if (( MAX_NUM > 0 )); then
+  NEXT_NUM=$((MAX_NUM + 1))
+else
+  NEXT_NUM=$((DIR_COUNT + 1))
+fi
+
+INDEX="$(printf '%02d' "$NEXT_NUM")"
+ASSIGNMENT_DIR="assignments/${INDEX}-${SLUG}"
 
 if [[ -e "$ASSIGNMENT_DIR" ]]; then
-  echo "Error: directory already exists: $ASSIGNMENT_DIR" >&2
+  echo "Error: 이미 존재하는 폴더입니다: $ASSIGNMENT_DIR" >&2
   exit 1
 fi
 
 mkdir -p "$ASSIGNMENT_DIR"
 
-cat > "${ASSIGNMENT_DIR}/README.md" <<EOF
-# ${TITLE}
+cat > "${ASSIGNMENT_DIR}/README.md" <<EOR
+# ${NEXT_NUM}. ${TITLE}
 
-## Overview
+## 개요
 
-- Date: ${DATE_STR}
-- Status: Planned
+- 과제 번호: ${INDEX}
+- 상태: 준비 중
 
-## Goal
+## 목표
 
 - 
 
-## Run
+## 실행 방법
 
 \`\`\`bash
 npm install
 npm run dev
 \`\`\`
 
-## Notes
+## 메모
 
 - 
-EOF
+EOR
 
-cat > "${ASSIGNMENT_DIR}/ASSIGNMENT.md" <<'EOF'
-# Assignment Spec
+cat > "${ASSIGNMENT_DIR}/ASSIGNMENT.md" <<'EOA'
+# 과제 명세
 
-## Topic
-
-- 
-
-## Requirements
+## 주제
 
 - 
 
-## Constraints
+## 요구사항
 
 - 
 
-## Done Criteria
-
-- [ ] Functional requirements complete
-- [ ] Error cases handled
-- [ ] `npm run lint` passed
-- [ ] `npm run build` passed
-EOF
-
-cat > "${ASSIGNMENT_DIR}/RETRO.md" <<'EOF'
-# Retro
-
-## What Went Well
+## 제약사항
 
 - 
 
-## What Was Hard
+## 완료 기준
+
+- [ ] 핵심 기능 구현 완료
+- [ ] 예외/에러 케이스 처리
+- [ ] `npm run lint` 통과
+- [ ] `npm run build` 통과
+EOA
+
+cat > "${ASSIGNMENT_DIR}/RETRO.md" <<'EOT'
+# 회고
+
+## 잘된 점
 
 - 
 
-## Next Actions
+## 아쉬운 점
 
 - 
-EOF
 
-echo "Created: ${ASSIGNMENT_DIR}"
-echo "Next: add code and document details in ${ASSIGNMENT_DIR}/README.md."
+## 다음 과제 액션 아이템
+
+- 
+EOT
+
+echo "생성 완료: ${ASSIGNMENT_DIR}"
+echo "다음 단계: ${ASSIGNMENT_DIR}/README.md에 과제 설명을 채워주세요."

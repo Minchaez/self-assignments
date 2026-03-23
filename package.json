@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "prepare": "husky",
-    "lint": "npm --prefix assignments/2026-03-23-type-safe-github-profile-searcher run lint"
+    "lint": "for dir in assignments/*; do if [ -f \"$dir/package.json\" ]; then npm --prefix \"$dir\" run lint; fi; done"
   },
   "devDependencies": {
     "husky": "^9.1.7"

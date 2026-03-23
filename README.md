@@ -12,7 +12,7 @@
 ```txt
 .
 ├─ assignments/
-│  └─ YYYY-MM-DD-topic-name/
+│  └─ 01-topic-name/
 │     ├─ README.md
 │     ├─ ASSIGNMENT.md
 │     └─ RETRO.md
@@ -26,7 +26,7 @@
 
 ## How To Add New Assignment
 
-1. `./scripts/new-assignment.sh "Assignment Title"` 실행
+1. `./scripts/new-assignment.sh "과제 제목"` 실행
 2. 생성된 과제 폴더에서 구현
 
 ## CI
