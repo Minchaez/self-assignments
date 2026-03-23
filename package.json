@@ -1,0 +1,12 @@
+{
+  "name": "self-assignments",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "prepare": "husky",
+    "lint": "npm --prefix assignments/2026-03-23-type-safe-github-profile-searcher run lint"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}

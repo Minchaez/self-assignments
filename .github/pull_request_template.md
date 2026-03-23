@@ -1,10 +1,10 @@
 ## Summary
 
-- 
+-
 
 ## Why
 
-- 
+-
 
 ## Checklist
 
